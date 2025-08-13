@@ -1,128 +1,73 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken, getUserByEmail } from '@/lib/auth';
-import { updateExpense, deleteExpense } from '@/lib/expenses';
-
-export async function PUT(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
-  try {
-    const params = await context.params;
-    const authHeader = request.headers.get('authorization');
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { success: false, message: 'Token manquant' },
-        { status: 401 }
-      );
-    }
-
-    const token = authHeader.substring(7);
-    const decoded = verifyToken(token);
-
-    if (!decoded) {
-      return NextResponse.json(
-        { success: false, message: 'Token invalide' },
-        { status: 401 }
-      );
-    }
-
-    const user = getUserByEmail(decoded.email);
-    if (!user) {
-      return NextResponse.json(
-        { success: false, message: 'Utilisateur non trouvé' },
-        { status: 404 }
-      );
-    }
-
-    const { amount, description } = await request.json();
-
-    if (!amount && !description) {
-      return NextResponse.json(
-        { success: false, message: 'Aucune donnée à modifier' },
-        { status: 400 }
-      );
-    }
-
-    const updates: Partial<{ amount: number; description: string }> = {};
-    if (amount !== undefined) updates.amount = parseFloat(amount.toString());
-    if (description !== undefined) updates.description = description;
-
-    const updatedExpense = await updateExpense(params.id, updates, user.id);
-
-    if (!updatedExpense) {
-      return NextResponse.json(
-        { success: false, message: 'Dépense non trouvée' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      expense: updatedExpense,
-      message: 'Dépense modifiée avec succès'
-    });
-
-  } catch (error) {
-    console.error('Erreur lors de la modification:', error);
-    return NextResponse.json(
-      { success: false, message: 'Erreur lors de la modification' },
-      { status: 500 }
-    );
-  }
-}
+import { supabase } from '@/lib/supabase';
+import { deleteExpense, updateExpense } from '@/lib/expenses';
 
 export async function DELETE(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const params = await context.params;
+    // Récupérer l'utilisateur depuis la session Supabase
     const authHeader = request.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ success: false, message: 'Token manquant' }, { status: 401 });
+    }
+
+    const token = authHeader.split(' ')[1];
     
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { success: false, message: 'Token manquant' },
-        { status: 401 }
-      );
+    // Vérifier le token avec Supabase
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    
+    if (error || !user) {
+      return NextResponse.json({ success: false, message: 'Token invalide' }, { status: 401 });
     }
 
-    const token = authHeader.substring(7);
-    const decoded = verifyToken(token);
-
-    if (!decoded) {
-      return NextResponse.json(
-        { success: false, message: 'Token invalide' },
-        { status: 401 }
-      );
-    }
-
-    const user = getUserByEmail(decoded.email);
-    if (!user) {
-      return NextResponse.json(
-        { success: false, message: 'Utilisateur non trouvé' },
-        { status: 404 }
-      );
-    }
-
-    const deleted = await deleteExpense(params.id, user.id);
-
-    if (!deleted) {
-      return NextResponse.json(
-        { success: false, message: 'Dépense non trouvée' },
-        { status: 404 }
-      );
-    }
+    await deleteExpense(params.id, user.id);
 
     return NextResponse.json({
       success: true,
       message: 'Dépense supprimée avec succès'
     });
-
   } catch (error) {
-    console.error('Erreur lors de la suppression:', error);
+    console.error('Erreur lors de la suppression de la dépense:', error);
     return NextResponse.json(
-      { success: false, message: 'Erreur lors de la suppression' },
+      { success: false, message: 'Erreur lors de la suppression de la dépense' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    // Récupérer l'utilisateur depuis la session Supabase
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ success: false, message: 'Token manquant' }, { status: 401 });
+    }
+
+    const token = authHeader.split(' ')[1];
+    
+    // Vérifier le token avec Supabase
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    
+    if (error || !user) {
+      return NextResponse.json({ success: false, message: 'Token invalide' }, { status: 401 });
+    }
+
+    const updatedData = await request.json();
+    const expense = await updateExpense(params.id, updatedData, user.id);
+
+    return NextResponse.json({
+      success: true,
+      expense
+    });
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour de la dépense:', error);
+    return NextResponse.json(
+      { success: false, message: 'Erreur lors de la mise à jour de la dépense' },
       { status: 500 }
     );
   }

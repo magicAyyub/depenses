@@ -2,14 +2,15 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import SimpleLoginForm from '@/components/SimpleLoginForm';
+import SimpleLoginForm from '@/components/SupabaseLoginForm';
 import Loading from '@/components/Loading';
 import SimpleExpenseInput from '@/components/SimpleExpenseInput';
 import SimpleExpenseList from '@/components/SimpleExpenseList';
 import ExpenseHistory from '@/components/ExpenseHistory';
 import MonthExpenseEditor from '@/components/MonthExpenseEditor';
 import { Toaster } from '@/components/ui/sonner';
-import { LogOut, Wallet, ArrowLeft } from 'lucide-react';
+import { LogOut, Wallet, ArrowLeft, Settings } from 'lucide-react';
+import Link from 'next/link';
 
 type ViewMode = 'input' | 'list' | 'history' | 'edit';
 
@@ -56,7 +57,17 @@ export default function Home() {
               <h1 className="text-2xl font-bold text-gray-900">Dépenses</h1>
             </div>
             
-            <div className="flex items-center space-x-3">              
+            <div className="flex items-center space-x-3">
+              <span className="text-sm text-gray-600 hidden sm:block">
+                {user.full_name}
+              </span>
+              {user.is_admin && (
+                <Link href="/admin">
+                  <button className="p-2 hover:bg-gray-100 rounded-full transition-colors" title="Administration">
+                    <Settings className="h-5 w-5 text-gray-600" />
+                  </button>
+                </Link>
+              )}              
               <button
                 onClick={logout}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"

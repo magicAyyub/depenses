@@ -1,79 +1,123 @@
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import { supabase } from './supabase';
 import { User } from '@/types';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this';
-
-// Utilisateurs par défaut - à remplacer par une base de données plus tard
-const defaultUsers: User[] = [
-  {
-    id: '1',
-    email: 'jean.dupont@famille.com',
-    name: 'Jean Dupont',
-    role: 'admin'
-  },
-  {
-    id: '2',
-    email: 'marie.dupont@famille.com', 
-    name: 'Marie Dupont',
-    role: 'user'
-  },
-  {
-    id: '3',
-    email: 'pierre.dupont@famille.com',
-    name: 'Pierre Dupont',
-    role: 'user'
-  }
-];
-
-// Mots de passe par défaut (à hasher en production)
-const defaultPasswords: { [email: string]: string } = {
-  'jean.dupont@famille.com': 'password123',
-  'marie.dupont@famille.com': 'password123',
-  'pierre.dupont@famille.com': 'password123'
-};
-
-export async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, 12);
-}
-
-export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
-  return bcrypt.compare(password, hashedPassword);
-}
-
-export function generateToken(user: User): string {
-  return jwt.sign(
-    { userId: user.id, email: user.email, role: user.role },
-    JWT_SECRET,
-    { expiresIn: '7d' }
-  );
-}
-
-export function verifyToken(token: string): { userId: string; email: string; role: string } | null {
+export async function signIn(email: string, password: string): Promise<{ success: boolean; user?: User; message?: string }> {
   try {
-    return jwt.verify(token, JWT_SECRET) as { userId: string; email: string; role: string };
-  } catch {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      return {
+        success: false,
+        message: error.message === 'Invalid login credentials' 
+          ? 'Email ou mot de passe incorrect' 
+          : error.message
+      };
+    }
+
+    if (!data.user) {
+      return {
+        success: false,
+        message: 'Erreur lors de la connexion'
+      };
+    }
+
+    // Récupérer le profil utilisateur
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', data.user.id)
+      .single();
+
+    if (profileError || !profile) {
+      return {
+        success: false,
+        message: 'Profil utilisateur non trouvé'
+      };
+    }
+
+    return {
+      success: true,
+      user: {
+        id: profile.id,
+        email: profile.email,
+        username: profile.username,
+        full_name: profile.full_name,
+        is_admin: profile.is_admin || false
+      }
+    };
+  } catch (error) {
+    console.error('Erreur lors de la connexion:', error);
+    return {
+      success: false,
+      message: 'Erreur lors de la connexion'
+    };
+  }
+}
+
+export async function signOut(): Promise<{ success: boolean; message?: string }> {
+  try {
+    const { error } = await supabase.auth.signOut();
+    
+    if (error) {
+      return {
+        success: false,
+        message: error.message
+      };
+    }
+
+    return {
+      success: true
+    };
+  } catch (error) {
+    console.error('Erreur lors de la déconnexion:', error);
+    return {
+      success: false,
+      message: 'Erreur lors de la déconnexion'
+    };
+  }
+}
+
+export async function getCurrentUser(): Promise<User | null> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return null;
+    }
+
+    // Récupérer le profil utilisateur
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    if (error || !profile) {
+      return null;
+    }
+
+    return {
+      id: profile.id,
+      email: profile.email,
+      username: profile.username,
+      full_name: profile.full_name,
+      is_admin: profile.is_admin || false
+    };
+  } catch (error) {
+    console.error('Erreur lors de la récupération de l\'utilisateur:', error);
     return null;
   }
 }
 
-export function getUserByEmail(email: string): User | null {
-  return defaultUsers.find(user => user.email === email) || null;
-}
-
-export async function authenticateUser(email: string, password: string): Promise<User | null> {
-  const user = getUserByEmail(email);
-  if (!user) return null;
-  
-  // Pour l'instant, simple vérification du mot de passe
-  // Plus tard, on utilisera des mots de passe hashés
-  if (defaultPasswords[email] === password) {
-    return user;
+export async function getSession() {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session;
+  } catch (error) {
+    console.error('Erreur lors de la récupération de la session:', error);
+    return null;
   }
-  
-  return null;
-}
-
-export function getAllUsers(): User[] {
-  return defaultUsers;
 }

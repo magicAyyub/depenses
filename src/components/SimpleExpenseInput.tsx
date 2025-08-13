@@ -1,12 +1,11 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { Trash2, Save, Check, Plus } from 'lucide-react';
-import Cookies from 'js-cookie';
+import { getAuthHeaders } from '@/lib/authHelpers';
 
 interface ExpenseItem {
   amount: string;
@@ -19,7 +18,6 @@ interface ExpenseInputProps {
 }
 
 export default function SimpleExpenseInput({ onSave }: ExpenseInputProps) {
-  const { user } = useAuth();
   const [expenses, setExpenses] = useState<ExpenseItem[]>([
     { amount: '', description: '', isComplete: false }
   ]);
@@ -91,28 +89,31 @@ export default function SimpleExpenseInput({ onSave }: ExpenseInputProps) {
 
     setIsSaving(true);
     try {
-      const token = Cookies.get('auth-token');
-      const processedExpenses = validExpenses.map(exp => ({
-        amount: parseFloat(exp.amount),
-        description: exp.description,
-        date: new Date().toISOString(),
-        createdBy: user?.name || 'Inconnu',
-        createdAt: new Date().toISOString()
-      }));
+      const authHeaders = await getAuthHeaders();
+      
+      // Traiter les dépenses une par une avec le nouveau format API
+      const results = await Promise.all(
+        validExpenses.map(async (exp) => {
+          const response = await fetch('/api/expenses', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...authHeaders
+            },
+            body: JSON.stringify({
+              amount: parseFloat(exp.amount),
+              description: exp.description,
+              date: new Date().toISOString()
+            }),
+          });
+          return response.json();
+        })
+      );
 
-      const response = await fetch('/api/expenses', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ expenses: processedExpenses }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        toast.success(`${validExpenses.length} dépense(s) enregistrée(s)`);
+      const successCount = results.filter(r => r.success).length;
+      
+      if (successCount > 0) {
+        toast.success(`${successCount} dépense(s) enregistrée(s)`);
         setExpenses([{ amount: '', description: '', isComplete: false }]);
         setShowSummary(false);
         
@@ -121,7 +122,7 @@ export default function SimpleExpenseInput({ onSave }: ExpenseInputProps) {
           setTimeout(() => onSave(), 1000); // Délai pour voir le message de succès
         }
       } else {
-        toast.error(`Erreur: ${data.message}`);
+        toast.error('Erreur lors de l\'enregistrement des dépenses');
       }
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);

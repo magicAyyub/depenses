@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportToPDF } from '@/lib/pdf';
-import Cookies from 'js-cookie';
+import { getAuthHeaders } from '@/lib/authHelpers';
 
 export default function ExpenseHistory() {
   const [expenseMonths, setExpenseMonths] = useState<ExpenseMonth[]>([]);
@@ -29,10 +29,10 @@ export default function ExpenseHistory() {
 
   const loadExpenses = async () => {
     try {
-      const token = Cookies.get('auth-token');
+      const authHeaders = await getAuthHeaders();
       const response = await fetch('/api/expenses', {
         headers: {
-          'Authorization': `Bearer ${token}`
+          ...authHeaders
         }
       });
 

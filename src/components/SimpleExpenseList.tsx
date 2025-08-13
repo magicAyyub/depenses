@@ -21,7 +21,7 @@ import { toast } from 'sonner';
 import { 
   Download, Calendar, Edit, Plus, History } from 'lucide-react';
 import { exportToPDF } from '@/lib/pdf';
-import Cookies from 'js-cookie';
+import { getAuthHeaders } from '@/lib/authHelpers';
 
 interface SimpleExpenseListProps {
   onEditMonth?: (monthId: string) => void;
@@ -41,10 +41,10 @@ export default function SimpleExpenseList({
 
   const loadExpenses = async () => {
     try {
-      const token = Cookies.get('auth-token');
+      const authHeaders = await getAuthHeaders();
       const response = await fetch('/api/expenses', {
         headers: {
-          'Authorization': `Bearer ${token}`
+          ...authHeaders
         }
       });
 

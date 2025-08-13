@@ -2,12 +2,13 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '@/types';
-import Cookies from 'js-cookie';
+import { supabase } from '@/lib/supabase';
+import { getCurrentUser, signIn, signOut } from '@/lib/auth';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  logout: () => Promise<void>;
   isLoading: boolean;
 }
 
@@ -18,61 +19,62 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Vérifier si l'utilisateur est connecté au chargement
+    // Vérifier la session existante
     checkAuth();
+
+    // Écouter les changements d'authentification
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          const currentUser = await getCurrentUser();
+          setUser(currentUser);
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+        }
+        setIsLoading(false);
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const checkAuth = async () => {
     try {
-      const token = Cookies.get('auth-token');
-      if (token) {
-        const response = await fetch('/api/auth/verify', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data.user);
-        } else {
-          Cookies.remove('auth-token');
-        }
-      }
+      const currentUser = await getCurrentUser();
+      setUser(currentUser);
     } catch (error) {
       console.error('Erreur de vérification auth:', error);
-      Cookies.remove('auth-token');
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<{ success: boolean; message?: string }> => {
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (data.success && data.user && data.token) {
-        setUser(data.user);
-        Cookies.set('auth-token', data.token, { expires: 7 }); // 7 jours
-        return true;
+      const result = await signIn(email, password);
+      if (result.success && result.user) {
+        setUser(result.user);
       }
-      return false;
+      return result;
     } catch (error) {
       console.error('Erreur de connexion:', error);
-      return false;
+      return {
+        success: false,
+        message: 'Erreur lors de la connexion'
+      };
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    Cookies.remove('auth-token');
+  const logout = async () => {
+    try {
+      await signOut();
+      setUser(null);
+    } catch (error) {
+      console.error('Erreur de déconnexion:', error);
+    }
   };
 
   return (
