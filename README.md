@@ -1,34 +1,117 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 💰 Application de Gestion des Dépenses Familiales
 
-## Getting Started
+Une application web moderne développée avec **Next.js** pour gérer les dépenses familiales et éviter les disputes liées aux calculs manuels.
 
-First, run the development server:
+## 🌟 Fonctionnalités
 
+- ✅ **Saisie intuitive** : Interface avec ajout automatique de lignes
+- ✅ **Calculs en temps réel** : Total affiché instantanément
+- ✅ **Authentification** : Système de connexion sécurisé
+- ✅ **Traçabilité complète** : Suivi des modifications avec horodatage
+- ✅ **Export PDF** : Rapports professionnels formatés
+- ✅ **Interface moderne** : UI/UX optimisée et responsive
+- ✅ **Sauvegarde locale** : Fichiers JSON (migration Supabase prévue)
+
+## 🚀 Technologies Utilisées
+
+- **Next.js 14+** (App Router)
+- **TypeScript** pour la sécurité du code
+- **Tailwind CSS** pour le style moderne
+- **Heroicons** pour les icônes
+- **jsPDF** pour l'export PDF
+- **date-fns** pour la gestion des dates
+- **bcryptjs & jsonwebtoken** pour l'authentification
+
+## 🏃‍♂️ Démarrage Rapide
+
+### Prérequis
+- Node.js 18+ 
+- npm ou yarn
+
+### Installation
+
+1. **Lancer le serveur de développement :**
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Ouvrir l'application :**
+Rendez-vous sur [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 👥 Comptes de Test
 
-## Learn More
+| Email | Mot de passe | Rôle |
+|-------|-------------|------|
+| `pere@famille.com` | `password123` | Admin |
+| `mere@famille.com` | `password123` | Utilisateur |
+| `enfant@famille.com` | `password123` | Utilisateur |
 
-To learn more about Next.js, take a look at the following resources:
+## 📖 Guide d'Utilisation
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 1. Connexion
+- Utilisez un des comptes de test ci-dessus
+- Cliquez sur "Se connecter"
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 2. Saisie des Dépenses
+- Entrez le montant et la description
+- Une nouvelle ligne s'ajoute automatiquement
+- Cliquez sur "Calculer et Valider" pour voir le résumé
 
-## Deploy on Vercel
+### 3. Validation et Sauvegarde
+- Vérifiez le récapitulatif détaillé
+- Cliquez sur "Sauvegarder" pour enregistrer
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 4. Consultation de l'Historique
+- Onglet "Historique" pour voir toutes les dépenses
+- Cliquez sur un mois pour développer les détails
+- Modifiez ou supprimez des dépenses individuelles
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 5. Export PDF
+- Exportez un mois spécifique ou l'ensemble
+- Format professionnel avec tous les détails
+
+## 📁 Structure du Projet
+
+```
+src/
+├── app/                    # Pages Next.js (App Router)
+│   ├── api/               # Routes API
+│   │   ├── auth/          # Authentification
+│   │   └── expenses/      # Gestion des dépenses
+│   ├── layout.tsx         # Layout principal
+│   └── page.tsx           # Page d'accueil
+├── components/            # Composants React
+│   ├── ExpenseInput.tsx   # Saisie des dépenses
+│   ├── ExpenseSummary.tsx # Récapitulatif
+│   ├── ExpenseList.tsx    # Liste/historique
+│   ├── LoginForm.tsx      # Formulaire de connexion
+│   └── Loading.tsx        # Composant de chargement
+├── contexts/              # Contextes React
+│   └── AuthContext.tsx    # Gestion de l'authentification
+├── lib/                   # Utilitaires
+│   ├── auth.ts           # Fonctions d'authentification
+│   ├── expenses.ts       # Gestion des dépenses
+│   └── pdf.ts            # Export PDF
+└── types/                 # Types TypeScript
+    └── index.ts           # Définitions des interfaces
+```
+
+## 🔧 Scripts Disponibles
+
+```bash
+# Développement
+npm run dev
+
+# Build de production
+npm run build
+
+# Démarrer en production
+npm start
+
+# Linting
+npm run lint
+```
+
+---
+
+**Développé avec ❤️ pour simplifier la gestion des dépenses familiales**

@@ -1,0 +1,109 @@
+[
+  {
+    "id": "2025-08-1755013785395",
+    "month": "2025-08",
+    "year": 2025,
+    "expenses": [
+      {
+        "amount": 123,
+        "description": "test",
+        "date": "2025-08-12T15:49:45.274Z",
+        "createdBy": "Père",
+        "createdAt": "2025-08-12T15:49:45.394Z",
+        "id": "1755013785395-muovlrfdk"
+      },
+      {
+        "amount": 345,
+        "description": "test",
+        "date": "2025-08-12T15:49:45.274Z",
+        "createdBy": "Père",
+        "createdAt": "2025-08-12T15:49:45.396Z",
+        "id": "1755013785396-e88c75ycg"
+      },
+      {
+        "amount": 123,
+        "description": "32",
+        "date": "2025-08-12T16:13:35.094Z",
+        "createdBy": "Jean Dupont",
+        "createdAt": "2025-08-12T16:13:35.136Z",
+        "id": "1755015215138-qpg4b00ji"
+      },
+      {
+        "amount": 12,
+        "description": "hdhd",
+        "date": "2025-08-12T16:13:35.094Z",
+        "createdBy": "Jean Dupont",
+        "createdAt": "2025-08-12T16:13:35.138Z",
+        "id": "1755015215139-huwdji1gt"
+      },
+      {
+        "amount": 123,
+        "description": "ddkkdkd",
+        "date": "2025-08-12T16:56:10.197Z",
+        "createdBy": "Jean Dupont",
+        "createdAt": "2025-08-12T16:56:10.231Z",
+        "id": "1755017770232-n8rvm0gqj"
+      },
+      {
+        "amount": 344,
+        "description": "ddkdkd",
+        "date": "2025-08-12T16:56:10.197Z",
+        "createdBy": "Jean Dupont",
+        "createdAt": "2025-08-12T16:56:10.233Z",
+        "id": "1755017770233-xpci2kags"
+      },
+      {
+        "amount": 122,
+        "description": "sddjjdj",
+        "date": "2025-08-12T19:54:09.591Z",
+        "createdBy": "Jean Dupont",
+        "createdAt": "2025-08-12T19:54:09.642Z",
+        "id": "1755028449643-xln7bd07t"
+      },
+      {
+        "amount": 344,
+        "description": "ddd",
+        "date": "2025-08-12T19:54:09.592Z",
+        "createdBy": "Jean Dupont",
+        "createdAt": "2025-08-12T19:54:09.644Z",
+        "id": "1755028449644-xxb2dm088"
+      },
+      {
+        "amount": 123,
+        "description": "hhrh",
+        "date": "2025-08-12T20:18:48.269Z",
+        "createdBy": "Jean Dupont",
+        "createdAt": "2025-08-12T20:18:48.321Z",
+        "id": "1755029928322-1hnrd7xdy"
+      },
+      {
+        "amount": 234,
+        "description": "d,d,d,",
+        "date": "2025-08-12T20:18:48.269Z",
+        "createdBy": "Jean Dupont",
+        "createdAt": "2025-08-12T20:18:48.323Z",
+        "id": "1755029928323-n7kz1koh8"
+      },
+      {
+        "amount": 123,
+        "description": "jdjdjd",
+        "date": "2025-08-13T10:05:08.488Z",
+        "createdBy": "Jean Dupont",
+        "createdAt": "2025-08-13T10:05:08.542Z",
+        "id": "1755079508544-foh9p3xf0"
+      },
+      {
+        "amount": 344,
+        "description": "dkdkd",
+        "date": "2025-08-13T10:05:08.489Z",
+        "createdBy": "Jean Dupont",
+        "createdAt": "2025-08-13T10:05:08.545Z",
+        "id": "1755079508546-wh5sp6fmp"
+      }
+    ],
+    "total": 2360,
+    "createdAt": "2025-08-12T15:49:45.395Z",
+    "lastModifiedAt": "2025-08-13T10:05:08.546Z",
+    "lastModifiedBy": "1"
+  }
+]
