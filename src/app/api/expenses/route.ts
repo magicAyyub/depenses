@@ -76,6 +76,8 @@ export async function GET(request: NextRequest) {
 
 // Créer une nouvelle dépense
 export async function POST(request: NextRequest) {
+  let title, description, amount, category, date;
+  
   try {
     const authCheck = await requireAuth(request);
     
@@ -87,11 +89,21 @@ export async function POST(request: NextRequest) {
     }
 
     const { user } = authCheck;
-    const { title, description, amount, category, date } = await request.json();
+    ({ title, description, amount, category, date } = await request.json());
 
-    if (!title || !amount || !category || !date) {
+    // Validation flexible - description est suffisante comme titre si pas de titre fourni
+    if (!amount || !description || !date) {
       return NextResponse.json(
-        { success: false, message: 'Données manquantes (title, amount, category, date requis)' },
+        { success: false, message: 'Données manquantes (amount, description, date requis)' },
+        { status: 400 }
+      );
+    }
+
+    // Valider le montant
+    const numericAmount = parseFloat(amount);
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+      return NextResponse.json(
+        { success: false, message: 'Le montant doit être un nombre positif' },
         { status: 400 }
       );
     }
@@ -99,10 +111,10 @@ export async function POST(request: NextRequest) {
     // Créer la nouvelle dépense
     const [newExpense] = await db.insert(expenses).values({
       userId: user.id,
-      title,
+      title: title || description, // Utiliser description comme titre si pas de titre fourni
       description,
-      amount: amount.toString(),
-      category,
+      amount: numericAmount.toString(),
+      category: category || 'general', // Catégorie par défaut
       date: new Date(date),
     }).returning();
 
@@ -113,8 +125,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Erreur lors de la création de la dépense:', error);
+    console.error('Données reçues:', { title, description, amount, category, date });
     return NextResponse.json(
-      { success: false, message: 'Erreur serveur' },
+      { success: false, message: 'Erreur serveur', error: error instanceof Error ? error.message : 'Erreur inconnue' },
       { status: 500 }
     );
   }
