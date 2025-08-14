@@ -7,6 +7,7 @@ import Loading from '@/components/Loading';
 import SimpleExpenseInput from '@/components/SimpleExpenseInput';
 import SimpleExpenseList from '@/components/SimpleExpenseList';
 import ExpenseHistory from '@/components/ExpenseHistory';
+import ExpenseMonthEditor from '@/components/ExpenseMonthEditor';
 import { Toaster } from '@/components/ui/sonner';
 import { LogOut, Wallet, ArrowLeft, Settings } from 'lucide-react';
 import Link from 'next/link';
@@ -26,6 +27,11 @@ export default function Home() {
   const handleCloseEdit = () => {
     setEditingMonthId(null);
     setCurrentView('list');
+  };
+
+  const handleUpdateExpenses = () => {
+    // Cette fonction sera appelée après modification pour rafraîchir les données
+    // Pas besoin de faire quelque chose ici car le SimpleExpenseList se rechargera automatiquement
   };
 
   const handleNavigate = (view: 'input' | 'history') => {
@@ -144,15 +150,11 @@ export default function Home() {
               </button>
               <h2 className="text-xl font-semibold text-gray-900">Modifier les dépenses</h2>
             </div>
-            <div className="text-center py-8">
-              <p className="text-gray-600">Fonctionnalité d&apos;édition en cours de développement</p>
-              <button 
-                onClick={() => setCurrentView('list')}
-                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Retour à la liste
-              </button>
-            </div>
+            <ExpenseMonthEditor 
+              monthId={editingMonthId} 
+              onClose={handleCloseEdit}
+              onUpdate={handleUpdateExpenses}
+            />
           </div>
         )}
       </main>
