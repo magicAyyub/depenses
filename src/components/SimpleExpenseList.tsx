@@ -21,7 +21,7 @@ import { toast } from 'sonner';
 import { 
   Download, Calendar, Edit, Plus, History } from 'lucide-react';
 import { exportToPDF } from '@/lib/pdf';
-import { getAuthHeaders } from '@/lib/authHelpers';
+import { authenticatedFetch } from '@/lib/neonAuthHelpers';
 
 interface SimpleExpenseListProps {
   onEditMonth?: (monthId: string) => void;
@@ -41,13 +41,7 @@ export default function SimpleExpenseList({
 
   const loadExpenses = async () => {
     try {
-      const authHeaders = await getAuthHeaders();
-      const response = await fetch('/api/expenses', {
-        headers: {
-          ...authHeaders
-        }
-      });
-
+      const response = await authenticatedFetch('/api/expenses');
       const data = await response.json();
 
       if (data.success) {
@@ -346,8 +340,8 @@ export default function SimpleExpenseList({
             
             {expenseMonth.lastModifiedAt && (
               <div className="mt-4 text-xs text-gray-500 border-t pt-2">
-                Dernière modification le {format(new Date(expenseMonth.lastModifiedAt), 'dd/MM/yyyy à HH:mm')}  
-                par {expenseMonth.lastModifiedBy}
+                Dernière modification le {format(new Date(expenseMonth.lastModifiedAt), 'dd/MM/yyyy à HH:mm')}
+                {' '}par {expenseMonth.lastModifiedBy}
               </div>
             )}
           </CardContent>

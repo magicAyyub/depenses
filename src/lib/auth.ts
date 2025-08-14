@@ -1,123 +1,186 @@
-import { supabase } from './supabase';
-import { User } from '@/types';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { db, users } from './db';
+import { eq } from 'drizzle-orm';
+import type { User } from './schema';
 
-export async function signIn(email: string, password: string): Promise<{ success: boolean; user?: User; message?: string }> {
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-here-change-in-production';
+const JWT_EXPIRES_IN = '24h';
+
+export interface LoginResult {
+  success: boolean;
+  user?: Omit<User, 'passwordHash'>;
+  token?: string;
+  message?: string;
+}
+
+export interface RegisterResult {
+  success: boolean;
+  user?: Omit<User, 'passwordHash'>;
+  message?: string;
+}
+
+// Hasher un mot de passe
+export async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, 12);
+}
+
+// Vérifier un mot de passe
+export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
+  return bcrypt.compare(password, hashedPassword);
+}
+
+// Générer un token JWT
+export function generateToken(userId: string): string {
+  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+}
+
+// Vérifier un token JWT
+export function verifyToken(token: string): { userId: string } | null {
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+    return decoded;
+  } catch (error) {
+    console.error('Token verification failed:', error);
+    return null;
+  }
+}
 
-    if (error) {
-      return {
-        success: false,
-        message: error.message === 'Invalid login credentials' 
-          ? 'Email ou mot de passe incorrect' 
-          : error.message
-      };
+// Connexion utilisateur
+export async function signIn(emailOrUsername: string, password: string): Promise<LoginResult> {
+  try {
+    // Chercher par email ou nom d'utilisateur
+    const [user] = await db.select().from(users)
+      .where(
+        emailOrUsername.includes('@') 
+          ? eq(users.email, emailOrUsername)
+          : eq(users.username, emailOrUsername)
+      )
+      .limit(1);
+    
+    if (!user) {
+      return { success: false, message: 'Utilisateur non trouvé' };
     }
 
-    if (!data.user) {
-      return {
-        success: false,
-        message: 'Erreur lors de la connexion'
-      };
+    const isPasswordValid = await verifyPassword(password, user.passwordHash);
+    
+    if (!isPasswordValid) {
+      return { success: false, message: 'Mot de passe incorrect' };
     }
 
-    // Récupérer le profil utilisateur
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', data.user.id)
-      .single();
-
-    if (profileError || !profile) {
-      return {
-        success: false,
-        message: 'Profil utilisateur non trouvé'
-      };
-    }
-
+    const token = generateToken(user.id);
+    const { passwordHash, ...userWithoutPassword } = user;
+    
     return {
       success: true,
-      user: {
-        id: profile.id,
-        email: profile.email,
-        username: profile.username,
-        full_name: profile.full_name,
-        is_admin: profile.is_admin || false
-      }
+      user: userWithoutPassword,
+      token,
+      message: 'Connexion réussie'
     };
   } catch (error) {
-    console.error('Erreur lors de la connexion:', error);
-    return {
-      success: false,
-      message: 'Erreur lors de la connexion'
-    };
+    console.error('Sign in error:', error);
+    return { success: false, message: 'Erreur lors de la connexion' };
   }
 }
 
-export async function signOut(): Promise<{ success: boolean; message?: string }> {
+// Inscription utilisateur
+export async function registerUser(
+  email: string,
+  username: string,
+  fullName: string,
+  password: string,
+  isAdmin: boolean = false
+): Promise<RegisterResult> {
   try {
-    const { error } = await supabase.auth.signOut();
+    const [existingUser] = await db.select().from(users)
+      .where(eq(users.email, email))
+      .limit(1);
     
-    if (error) {
-      return {
-        success: false,
-        message: error.message
-      };
+    if (existingUser) {
+      return { success: false, message: 'Un utilisateur avec cet email existe déjà' };
     }
 
+    const [existingUsername] = await db.select().from(users)
+      .where(eq(users.username, username))
+      .limit(1);
+    
+    if (existingUsername) {
+      return { success: false, message: 'Ce nom d\'utilisateur est déjà pris' };
+    }
+
+    const passwordHash = await hashPassword(password);
+
+    const [newUser] = await db.insert(users).values({
+      email,
+      username,
+      fullName,
+      passwordHash,
+      isAdmin,
+    }).returning();
+
+    const { passwordHash: _, ...userWithoutPassword } = newUser;
+    
     return {
-      success: true
+      success: true,
+      user: userWithoutPassword,
+      message: 'Utilisateur créé avec succès'
     };
   } catch (error) {
-    console.error('Erreur lors de la déconnexion:', error);
-    return {
-      success: false,
-      message: 'Erreur lors de la déconnexion'
-    };
+    console.error('Register user error:', error);
+    return { success: false, message: 'Erreur lors de la création de l\'utilisateur' };
   }
 }
 
-export async function getCurrentUser(): Promise<User | null> {
+// Obtenir un utilisateur par son token
+export async function getCurrentUser(token: string): Promise<Omit<User, 'passwordHash'> | null> {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const decoded = verifyToken(token);
+    
+    if (!decoded) {
+      return null;
+    }
+
+    const [user] = await db.select().from(users)
+      .where(eq(users.id, decoded.userId))
+      .limit(1);
     
     if (!user) {
       return null;
     }
 
-    // Récupérer le profil utilisateur
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-
-    if (error || !profile) {
-      return null;
-    }
-
-    return {
-      id: profile.id,
-      email: profile.email,
-      username: profile.username,
-      full_name: profile.full_name,
-      is_admin: profile.is_admin || false
-    };
+    const { passwordHash, ...userWithoutPassword } = user;
+    return userWithoutPassword;
   } catch (error) {
-    console.error('Erreur lors de la récupération de l\'utilisateur:', error);
+    console.error('Get current user error:', error);
     return null;
   }
 }
 
-export async function getSession() {
+// Déconnexion utilisateur (côté client)
+export function signOut(): void {
+  // Cette fonction sera utilisée côté client pour effacer les données locales
+  // La vraie déconnexion se fait via l'API /auth/logout qui supprime le cookie
+  if (typeof window !== 'undefined') {
+    // Rediriger vers la page de connexion ou recharger la page
+    window.location.href = '/login';
+  }
+}
+
+// Obtenir un utilisateur par son ID
+export async function getUserById(userId: string): Promise<Omit<User, 'passwordHash'> | null> {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    return session;
+    const [user] = await db.select().from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    
+    if (!user) {
+      return null;
+    }
+
+    const { passwordHash, ...userWithoutPassword } = user;
+    return userWithoutPassword;
   } catch (error) {
-    console.error('Erreur lors de la récupération de la session:', error);
+    console.error('Get user by ID error:', error);
     return null;
   }
 }

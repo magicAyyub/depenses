@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { NeonAuthProvider } from "@/contexts/NeonAuthContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,9 +18,9 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body className={inter.className}>
-        <AuthProvider>
+        <NeonAuthProvider>
           {children}
-        </AuthProvider>
+        </NeonAuthProvider>
       </body>
     </html>
   );

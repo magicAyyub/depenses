@@ -5,10 +5,9 @@ import { getCurrentUser } from '@/lib/auth';
 
 export async function DELETE(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const params = await context.params;
     // Récupérer le token depuis les cookies
     const token = request.cookies.get('auth-token')?.value;
     
@@ -53,10 +52,9 @@ export async function DELETE(
 
 export async function PUT(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const params = await context.params;
     // Récupérer le token depuis les cookies
     const token = request.cookies.get('auth-token')?.value;
     

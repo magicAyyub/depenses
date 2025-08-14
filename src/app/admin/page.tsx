@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useState, useEffect, useCallback } from 'react';
+import { useNeonAuth } from '@/contexts/NeonAuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,8 +17,8 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { UserPlus, Users, ArrowLeft, Eye, EyeOff } from 'lucide-react';
-import { getAuthHeaders } from '@/lib/authHelpers';
+import { UserPlus, Users, ArrowLeft } from 'lucide-react';
+import { authenticatedFetch } from '@/lib/neonAuthHelpers';
 import { Toaster } from '@/components/ui/sonner';
 import Link from 'next/link';
 
@@ -26,90 +26,96 @@ interface User {
   id: string;
   email: string;
   username: string;
-  full_name: string;
-  created_at: string;
-  is_admin?: boolean;
+  fullName: string;
+  createdAt: string;
+  isAdmin?: boolean;
 }
 
 export default function AdminPage() {
-  const { user } = useAuth();
+  const { user } = useNeonAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
     email: '',
-    password: '',
     username: '',
-    full_name: ''
+    fullName: '',
+    password: '',
+    isAdmin: false
   });
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
-      const authHeaders = await getAuthHeaders();
-      const response = await fetch('/api/admin/users', {
-        headers: {
-          ...authHeaders
-        }
-      });
+      const response = await authenticatedFetch('/api/admin/users');
 
-      const data = await response.json();
-
-      if (data.success) {
-        setUsers(data.users);
-      } else {
-        toast.error(data.message || 'Erreur lors du chargement des utilisateurs');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erreur lors du chargement');
       }
-    } catch (error) {
+
+      const result = await response.json();
+
+      if (result.success) {
+        setUsers(result.users);
+        toast.success('Utilisateurs chargés avec succès');
+      } else {
+        toast.error(result.message || 'Erreur lors du chargement des utilisateurs');
+      }
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
       console.error('Erreur:', error);
-      toast.error('Erreur lors du chargement des utilisateurs');
+      toast.error(`Erreur: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setCreating(true);
 
     try {
-      const authHeaders = await getAuthHeaders();
-      const response = await fetch('/api/admin/users', {
+      const response = await authenticatedFetch('/api/admin/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...authHeaders
         },
         body: JSON.stringify(formData)
       });
 
-      const data = await response.json();
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erreur lors de la création');
+      }
 
+      const data = await response.json();
+      
       if (data.success) {
         toast.success('Utilisateur créé avec succès !');
-        setFormData({ email: '', password: '', username: '', full_name: '' });
+        setFormData({ email: '', username: '', fullName: '', password: '', isAdmin: false });
         setShowCreateForm(false);
         loadUsers(); // Recharger la liste
       } else {
-        toast.error(data.message || 'Erreur lors de la création de l\'utilisateur');
+        throw new Error(data.message || 'Erreur lors de la création de l\'utilisateur');
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
       console.error('Erreur:', error);
-      toast.error('Erreur lors de la création de l\'utilisateur');
+      toast.error(`Erreur: ${errorMessage}`);
     } finally {
       setCreating(false);
     }
   };
 
   // Vérifier si l'utilisateur a accès à l'admin
-  const isAdmin = user?.is_admin;
+  const isAdmin = user?.isAdmin;
 
   if (!user || !isAdmin) {
     return (
@@ -189,40 +195,37 @@ export default function AdminPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="full_name">Nom complet</Label>
+                    <Label htmlFor="fullName">Nom complet</Label>
                     <Input
-                      id="full_name"
-                      value={formData.full_name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
+                      id="fullName"
+                      value={formData.fullName}
+                      onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
                       required
                       placeholder="Prénom Nom"
                     />
                   </div>
                   <div>
                     <Label htmlFor="password">Mot de passe</Label>
-                    <div className="relative">
-                      <Input
-                        id="password"
-                        type={showPassword ? 'text' : 'password'}
-                        value={formData.password}
-                        onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                        required
-                        placeholder="Mot de passe sécurisé"
-                        className="pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4 text-gray-400" />
-                        ) : (
-                          <Eye className="h-4 w-4 text-gray-400" />
-                        )}
-                      </button>
-                    </div>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                      required
+                      placeholder="Mot de passe sécurisé"
+                      minLength={6}
+                    />
                   </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="isAdmin"
+                    checked={formData.isAdmin}
+                    onChange={(e) => setFormData(prev => ({ ...prev, isAdmin: e.target.checked }))}
+                    className="rounded border-gray-300"
+                  />
+                  <Label htmlFor="isAdmin">Administrateur</Label>
                 </div>
                 <div className="flex space-x-4">
                   <Button type="submit" disabled={creating}>
@@ -277,13 +280,13 @@ export default function AdminPage() {
                     <TableRow key={userData.id}>
                       <TableCell className="font-medium">{userData.email}</TableCell>
                       <TableCell>{userData.username}</TableCell>
-                      <TableCell>{userData.full_name}</TableCell>
+                      <TableCell>{userData.fullName}</TableCell>
                       <TableCell>
-                        {new Date(userData.created_at).toLocaleDateString('fr-FR')}
+                        {new Date(userData.createdAt).toLocaleDateString('fr-FR')}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={userData.is_admin ? 'default' : 'secondary'}>
-                          {userData.is_admin ? 'Admin' : 'Utilisateur'}
+                        <Badge variant={userData.isAdmin ? 'default' : 'secondary'}>
+                          {userData.isAdmin ? 'Admin' : 'Utilisateur'}
                         </Badge>
                       </TableCell>
                     </TableRow>

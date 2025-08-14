@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import { ExpenseMonth, Expense } from '@/types';
+import { ExpenseMonth, OldExpense } from '@/types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -54,7 +54,7 @@ export function exportToPDF(expenseMonth: ExpenseMonth): void {
   // Contenu du tableau
   doc.setFont('helvetica', 'normal');
   
-  expenseMonth.expenses.forEach((expense: Expense) => {
+  expenseMonth.expenses.forEach((expense: OldExpense) => {
     // Vérifier si on a besoin d'une nouvelle page
     if (currentY > pageHeight - 30) {
       doc.addPage();

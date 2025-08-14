@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { Trash2, Save, Check, Plus } from 'lucide-react';
-import { getAuthHeaders } from '@/lib/authHelpers';
+import { authenticatedFetch } from '@/lib/neonAuthHelpers';
 
 interface ExpenseItem {
   amount: string;
@@ -89,16 +89,13 @@ export default function SimpleExpenseInput({ onSave }: ExpenseInputProps) {
 
     setIsSaving(true);
     try {
-      const authHeaders = await getAuthHeaders();
-      
       // Traiter les dépenses une par une avec le nouveau format API
       const results = await Promise.all(
         validExpenses.map(async (exp) => {
-          const response = await fetch('/api/expenses', {
+          const response = await authenticatedFetch('/api/expenses', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              ...authHeaders
             },
             body: JSON.stringify({
               amount: parseFloat(exp.amount),

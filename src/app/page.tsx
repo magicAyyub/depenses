@@ -1,13 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import SimpleLoginForm from '@/components/SupabaseLoginForm';
+import { useNeonAuth } from '@/contexts/NeonAuthContext';
+import NeonLoginForm from '@/components/NeonLoginForm';
 import Loading from '@/components/Loading';
 import SimpleExpenseInput from '@/components/SimpleExpenseInput';
 import SimpleExpenseList from '@/components/SimpleExpenseList';
 import ExpenseHistory from '@/components/ExpenseHistory';
-import MonthExpenseEditor from '@/components/MonthExpenseEditor';
 import { Toaster } from '@/components/ui/sonner';
 import { LogOut, Wallet, ArrowLeft, Settings } from 'lucide-react';
 import Link from 'next/link';
@@ -15,7 +14,7 @@ import Link from 'next/link';
 type ViewMode = 'input' | 'list' | 'history' | 'edit';
 
 export default function Home() {
-  const { user, isLoading, logout } = useAuth();
+  const { user, isLoading, logout } = useNeonAuth();
   const [currentView, setCurrentView] = useState<ViewMode>('list'); // Commencer par la liste
   const [editingMonthId, setEditingMonthId] = useState<string | null>(null);
 
@@ -39,10 +38,12 @@ export default function Home() {
 
   if (!user) {
     return (
-      <>
-        <SimpleLoginForm />
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="w-full max-w-md">
+          <NeonLoginForm onSuccess={() => window.location.reload()} />
+        </div>
         <Toaster />
-      </>
+      </div>
     );
   }
 
@@ -59,9 +60,9 @@ export default function Home() {
             
             <div className="flex items-center space-x-3">
               <span className="text-sm text-gray-600 hidden sm:block">
-                {user.full_name}
+                {user.fullName}
               </span>
-              {user.is_admin && (
+              {user.isAdmin && (
                 <Link href="/admin">
                   <button className="p-2 hover:bg-gray-100 rounded-full transition-colors" title="Administration">
                     <Settings className="h-5 w-5 text-gray-600" />
@@ -143,11 +144,15 @@ export default function Home() {
               </button>
               <h2 className="text-xl font-semibold text-gray-900">Modifier les dépenses</h2>
             </div>
-            <MonthExpenseEditor 
-              monthId={editingMonthId}
-              onClose={handleCloseEdit}
-              onSave={() => setCurrentView('list')}
-            />
+            <div className="text-center py-8">
+              <p className="text-gray-600">Fonctionnalité d&apos;édition en cours de développement</p>
+              <button 
+                onClick={() => setCurrentView('list')}
+                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Retour à la liste
+              </button>
+            </div>
           </div>
         )}
       </main>

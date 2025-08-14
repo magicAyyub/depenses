@@ -1,25 +1,65 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
-import { addExpense, loadExpenses } from '@/lib/expenses';
+import { getCurrentUser } from '@/lib/auth';
+import { db, expenses, expenseItems } from '@/lib/db';
+import { eq } from 'drizzle-orm';
 
+// Helper pour vérifier l'authentification
+async function requireAuth(request: NextRequest) {
+  const token = request.cookies.get('auth-token')?.value;
+  
+  if (!token) {
+    return { error: 'Token non trouvé', status: 401 };
+  }
+
+  const user = await getCurrentUser(token);
+  
+  if (!user) {
+    return { error: 'Utilisateur non trouvé', status: 401 };
+  }
+
+  return { user };
+}
+
+// Récupérer les dépenses de l'utilisateur
 export async function GET(request: NextRequest) {
   try {
-    // Récupérer l'utilisateur depuis la session Supabase
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ success: false, message: 'Token manquant' }, { status: 401 });
+    const authCheck = await requireAuth(request);
+    
+    if ('error' in authCheck) {
+      return NextResponse.json(
+        { success: false, message: authCheck.error },
+        { status: authCheck.status }
+      );
     }
 
-    const token = authHeader.split(' ')[1];
-    
-    // Vérifier le token avec Supabase
-    const { data: { user }, error } = await supabase.auth.getUser(token);
-    
-    if (error || !user) {
-      return NextResponse.json({ success: false, message: 'Token invalide' }, { status: 401 });
-    }
+    const { user } = authCheck;
 
-    const expenseMonths = await loadExpenses(user.id);
+    // Récupérer toutes les dépenses de l'utilisateur avec leurs éléments
+    const userExpenses = await db.select().from(expenses)
+      .where(eq(expenses.userId, user.id))
+      .orderBy(expenses.date);
+
+    // Pour l'instant, retourner un format compatible avec l'ancien système
+    // Plus tard, on pourra optimiser cette structure
+    const expenseMonths = [
+      {
+        id: 'temp-month',
+        month: new Date().toISOString().slice(0, 7), // YYYY-MM
+        year: new Date().getFullYear(),
+        expenses: userExpenses.map(expense => ({
+          id: expense.id,
+          amount: parseFloat(expense.amount),
+          description: expense.description || '',
+          date: expense.date.toISOString(),
+          createdBy: user.username,
+          createdAt: expense.createdAt.toISOString(),
+        })),
+        total: userExpenses.reduce((sum, expense) => sum + parseFloat(expense.amount), 0),
+        createdAt: new Date().toISOString(),
+        lastModifiedAt: new Date().toISOString(),
+        lastModifiedBy: user.username
+      }
+    ];
 
     return NextResponse.json({
       success: true,
@@ -28,57 +68,53 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Erreur lors du chargement des dépenses:', error);
     return NextResponse.json(
-      { success: false, message: 'Erreur lors du chargement des dépenses' },
+      { success: false, message: 'Erreur serveur' },
       { status: 500 }
     );
   }
 }
 
+// Créer une nouvelle dépense
 export async function POST(request: NextRequest) {
   try {
-    // Récupérer l'utilisateur depuis la session Supabase
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ success: false, message: 'Token manquant' }, { status: 401 });
-    }
-
-    const token = authHeader.split(' ')[1];
+    const authCheck = await requireAuth(request);
     
-    // Vérifier le token avec Supabase
-    const { data: { user }, error } = await supabase.auth.getUser(token);
-    
-    if (error || !user) {
-      return NextResponse.json({ success: false, message: 'Token invalide' }, { status: 401 });
-    }
-
-    const { amount, description, date } = await request.json();
-
-    if (!amount || !description || !date) {
+    if ('error' in authCheck) {
       return NextResponse.json(
-        { success: false, message: 'Données manquantes' },
+        { success: false, message: authCheck.error },
+        { status: authCheck.status }
+      );
+    }
+
+    const { user } = authCheck;
+    const { title, description, amount, category, date } = await request.json();
+
+    if (!title || !amount || !category || !date) {
+      return NextResponse.json(
+        { success: false, message: 'Données manquantes (title, amount, category, date requis)' },
         { status: 400 }
       );
     }
 
-    const expense = await addExpense(
-      {
-        amount: parseFloat(amount),
-        description,
-        date,
-        createdBy: user.id,
-        createdAt: new Date().toISOString()
-      },
-      user.id
-    );
+    // Créer la nouvelle dépense
+    const [newExpense] = await db.insert(expenses).values({
+      userId: user.id,
+      title,
+      description,
+      amount: amount.toString(),
+      category,
+      date: new Date(date),
+    }).returning();
 
     return NextResponse.json({
       success: true,
-      expense
+      expense: newExpense,
+      message: 'Dépense créée avec succès'
     });
   } catch (error) {
-    console.error('Erreur lors de l\'ajout de la dépense:', error);
+    console.error('Erreur lors de la création de la dépense:', error);
     return NextResponse.json(
-      { success: false, message: 'Erreur lors de l\'ajout de la dépense' },
+      { success: false, message: 'Erreur serveur' },
       { status: 500 }
     );
   }
