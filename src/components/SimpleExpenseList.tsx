@@ -21,7 +21,6 @@ import { toast } from 'sonner';
 import { 
   Download, Calendar, Edit, Plus, History } from 'lucide-react';
 import { exportToPDF } from '@/lib/pdf';
-import { authenticatedFetch } from '@/lib/neonAuthHelpers';
 
 interface SimpleExpenseListProps {
   onEditMonth?: (monthId: string) => void;
@@ -41,7 +40,7 @@ export default function SimpleExpenseList({
 
   const loadExpenses = async () => {
     try {
-      const response = await authenticatedFetch('/api/expenses');
+      const response = await fetch('/api/expenses');
       const data = await response.json();
 
       if (data.success) {

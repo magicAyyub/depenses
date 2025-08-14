@@ -50,47 +50,54 @@ export default function NeonLoginForm({ onSuccess }: LoginFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>Connexion</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="w-full min-h-screen flex items-center justify-center p-4">
+      <Card className="w-full max-w-sm sm:max-w-md mx-auto">
+        <CardHeader className="text-center px-4 sm:px-6">
+          <CardTitle className="text-xl sm:text-2xl">Connexion</CardTitle>
+          <p className="text-xs sm:text-sm text-gray-600 mt-2">
+            Connectez-vous à votre compte pour continuer.
+          </p>
+        </CardHeader>
+        <CardContent className="px-4 sm:px-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           {error && (
             <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription className="text-sm">{error}</AlertDescription>
             </Alert>
           )}
           
           <div className="space-y-2">
-            <Label htmlFor="emailOrUsername">Email ou nom d&apos;utilisateur</Label>
+            <Label className='font-medium text-gray-700 text-sm sm:text-base' htmlFor="emailOrUsername">Email ou nom d&apos;utilisateur</Label>
             <Input
               id="emailOrUsername"
               type="text"
               value={emailOrUsername}
               onChange={(e) => setEmailOrUsername(e.target.value)}
-              placeholder="admin@depenses.com ou admin"
+              placeholder="exemple@gmail.com ou exemple99"
               required
+              className="h-10 sm:h-12 text-sm sm:text-base"
             />
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="password">Mot de passe</Label>
+            <Label className='font-medium text-gray-700 text-sm sm:text-base' htmlFor="password">Mot de passe</Label>
             <Input
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="admin123!"
+              placeholder="exemple123!"
               required
+              className="h-10 sm:h-12 text-sm sm:text-base"
             />
           </div>
           
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full h-10 sm:h-12 text-sm sm:text-base font-medium" disabled={loading}>
             {loading ? 'Connexion...' : 'Se connecter'}
           </Button>
         </form>
       </CardContent>
     </Card>
+    </div>
   );
 }

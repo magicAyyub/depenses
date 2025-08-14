@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportToPDF } from '@/lib/pdf';
-import { authenticatedFetch } from '@/lib/neonAuthHelpers';
 
 export default function ExpenseHistory() {
   const [expenseMonths, setExpenseMonths] = useState<ExpenseMonth[]>([]);
@@ -29,7 +28,7 @@ export default function ExpenseHistory() {
 
   const loadExpenses = async () => {
     try {
-      const response = await authenticatedFetch('/api/expenses');
+      const response = await fetch('/api/expenses');
       const data = await response.json();
 
       if (data.success) {
