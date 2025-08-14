@@ -15,7 +15,7 @@ export function exportToPDF(expenseMonth: ExpenseMonth): void {
   // Titre
   doc.setFontSize(20);
   doc.setFont('helvetica', 'bold');
-  doc.text('Relevé des Dépenses Familiales', pageWidth / 2, currentY, { align: 'center' });
+  doc.text('Relevé des Dépenses', pageWidth / 2, currentY, { align: 'center' });
   currentY += 15;
   
   // Période

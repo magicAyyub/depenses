@@ -6,8 +6,8 @@ import { NeonAuthProvider } from "@/contexts/NeonAuthContext";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Gestion des Dépenses Familiales",
-  description: "Application de gestion des dépenses familiales avec suivi en temps réel",
+  title: "Gestion des Dépenses",
+  description: "Application de gestion des dépenses.",
 };
 
 export default function RootLayout({

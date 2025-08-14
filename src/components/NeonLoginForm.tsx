@@ -73,7 +73,7 @@ export default function NeonLoginForm({ onSuccess }: LoginFormProps) {
               type="text"
               value={emailOrUsername}
               onChange={(e) => setEmailOrUsername(e.target.value)}
-              placeholder="exemple@gmail.com ou exemple99"
+              placeholder="entrez votre email ou nom d'utilisateur"
               required
               className="h-10 sm:h-12 text-sm sm:text-base"
             />
@@ -86,7 +86,7 @@ export default function NeonLoginForm({ onSuccess }: LoginFormProps) {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="exemple123!"
+              placeholder="************"
               required
               className="h-10 sm:h-12 text-sm sm:text-base"
             />
