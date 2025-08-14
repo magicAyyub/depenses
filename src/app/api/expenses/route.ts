@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { db, expenses, expenseItems } from '@/lib/db';
+import { db, expenses } from '@/lib/db';
 import { eq } from 'drizzle-orm';
 
 // Helper pour vérifier l'authentification

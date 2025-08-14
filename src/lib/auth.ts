@@ -20,6 +20,13 @@ export interface RegisterResult {
   message?: string;
 }
 
+export interface JWTPayload {
+  userId: string;
+  email: string;
+  isAdmin: boolean;
+}
+
+
 // Hasher un mot de passe
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12);
@@ -69,6 +76,7 @@ export async function signIn(emailOrUsername: string, password: string): Promise
     }
 
     const token = generateToken(user.id);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash, ...userWithoutPassword } = user;
     
     return {
@@ -118,6 +126,7 @@ export async function registerUser(
       isAdmin,
     }).returning();
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash: _, ...userWithoutPassword } = newUser;
     
     return {
@@ -134,12 +143,8 @@ export async function registerUser(
 // Obtenir un utilisateur par son token
 export async function getCurrentUser(token: string): Promise<Omit<User, 'passwordHash'> | null> {
   try {
-    const decoded = verifyToken(token);
+    const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
     
-    if (!decoded) {
-      return null;
-    }
-
     const [user] = await db.select().from(users)
       .where(eq(users.id, decoded.userId))
       .limit(1);
@@ -148,6 +153,7 @@ export async function getCurrentUser(token: string): Promise<Omit<User, 'passwor
       return null;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash, ...userWithoutPassword } = user;
     return userWithoutPassword;
   } catch (error) {
@@ -177,6 +183,7 @@ export async function getUserById(userId: string): Promise<Omit<User, 'passwordH
       return null;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash, ...userWithoutPassword } = user;
     return userWithoutPassword;
   } catch (error) {
