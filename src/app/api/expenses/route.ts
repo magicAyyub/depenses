@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { db, expenses } from '@/lib/db';
+import { db, expenses, users } from '@/lib/db';
 import { eq } from 'drizzle-orm';
 
 // Helper pour vérifier l'authentification
@@ -20,7 +20,7 @@ async function requireAuth(request: NextRequest) {
   return { user };
 }
 
-// Récupérer les dépenses de l'utilisateur
+// Récupérer toutes les dépenses (partagées entre tous les utilisateurs)
 export async function GET(request: NextRequest) {
   try {
     const authCheck = await requireAuth(request);
@@ -34,10 +34,22 @@ export async function GET(request: NextRequest) {
 
     const { user } = authCheck;
 
-    // Récupérer toutes les dépenses de l'utilisateur avec leurs éléments
-    const userExpenses = await db.select().from(expenses)
-      .where(eq(expenses.userId, user.id))
-      .orderBy(expenses.date);
+    // Récupérer TOUTES les dépenses avec les informations de l'utilisateur qui les a créées
+    const allExpenses = await db.select({
+      id: expenses.id,
+      title: expenses.title,
+      description: expenses.description,
+      amount: expenses.amount,
+      category: expenses.category,
+      date: expenses.date,
+      createdAt: expenses.createdAt,
+      updatedAt: expenses.updatedAt,
+      userId: expenses.userId,
+      createdByUsername: users.username
+    })
+    .from(expenses)
+    .leftJoin(users, eq(expenses.userId, users.id))
+    .orderBy(expenses.date);
 
     // Pour l'instant, retourner un format compatible avec l'ancien système
     // Plus tard, on pourra optimiser cette structure
@@ -46,15 +58,15 @@ export async function GET(request: NextRequest) {
         id: 'temp-month',
         month: new Date().toISOString().slice(0, 7), // YYYY-MM
         year: new Date().getFullYear(),
-        expenses: userExpenses.map(expense => ({
+        expenses: allExpenses.map(expense => ({
           id: expense.id,
           amount: parseFloat(expense.amount),
           description: expense.description || '',
           date: expense.date.toISOString(),
-          createdBy: user.username,
+          createdBy: expense.createdByUsername || 'Utilisateur inconnu',
           createdAt: expense.createdAt.toISOString(),
         })),
-        total: userExpenses.reduce((sum, expense) => sum + parseFloat(expense.amount), 0),
+        total: allExpenses.reduce((sum, expense) => sum + parseFloat(expense.amount), 0),
         createdAt: new Date().toISOString(),
         lastModifiedAt: new Date().toISOString(),
         lastModifiedBy: user.username

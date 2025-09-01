@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, expenses } from '@/lib/db';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth';
 
 export async function DELETE(
@@ -25,9 +25,9 @@ export async function DELETE(
 
     const expenseId = params.id;
 
-    // Vérifier que l'expense existe et appartient à l'utilisateur
+    // Vérifier que l'expense existe (sans vérifier le propriétaire puisque c'est maintenant partagé)
     const [expense] = await db.select().from(expenses)
-      .where(and(eq(expenses.id, expenseId), eq(expenses.userId, user.id)))
+      .where(eq(expenses.id, expenseId))
       .limit(1);
 
     if (!expense) {
@@ -74,9 +74,9 @@ export async function PUT(
     const { amount, description } = await request.json();
     const expenseId = params.id;
 
-    // Vérifier que l'expense existe et appartient à l'utilisateur
+    // Vérifier que l'expense existe (sans vérifier le propriétaire puisque c'est maintenant partagé)
     const [expense] = await db.select().from(expenses)
-      .where(and(eq(expenses.id, expenseId), eq(expenses.userId, user.id)))
+      .where(eq(expenses.id, expenseId))
       .limit(1);
 
     if (!expense) {
