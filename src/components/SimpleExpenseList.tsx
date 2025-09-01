@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import { 
   Download, Calendar, Edit, Plus, History } from 'lucide-react';
 import { exportToPDF } from '@/lib/pdf';
+import BudgetManager from './BudgetManager';
 
 interface SimpleExpenseListProps {
   onEditMonth?: (monthId: string) => void;
@@ -33,10 +34,11 @@ export default function SimpleExpenseList({
 }: SimpleExpenseListProps) {
   const [expenseMonths, setExpenseMonths] = useState<ExpenseMonth[]>([]);
   const [loading, setLoading] = useState(true);
+  const [budgetUpdateTrigger, setBudgetUpdateTrigger] = useState(0);
 
   useEffect(() => {
     loadExpenses();
-  }, []);
+  }, [budgetUpdateTrigger]);
 
   const loadExpenses = async () => {
     try {
@@ -54,6 +56,24 @@ export default function SimpleExpenseList({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleBudgetUpdate = () => {
+    setBudgetUpdateTrigger(prev => prev + 1);
+  };
+
+  const getCurrentMonth = () => {
+    const now = new Date();
+    return {
+      month: format(now, 'yyyy-MM'),
+      year: now.getFullYear()
+    };
+  };
+
+  const getCurrentMonthExpenses = () => {
+    const current = getCurrentMonth();
+    const currentMonth = expenseMonths.find(month => month.month === current.month);
+    return currentMonth ? currentMonth.total : 0;
   };
 
   const getTotalGeneral = () => {
@@ -109,6 +129,14 @@ export default function SimpleExpenseList({
           </div>
         </CardContent>
       </Card>
+
+      {/* Gestionnaire de budget pour le mois courant */}
+      <BudgetManager 
+        month={getCurrentMonth().month}
+        year={getCurrentMonth().year}
+        totalExpenses={getCurrentMonthExpenses()}
+        onBudgetUpdate={handleBudgetUpdate}
+      />
 
       {/* Accès rapides - Outils compacts */}
       <h2 className="text-lg font-semibold">Accès rapides</h2>

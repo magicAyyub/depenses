@@ -37,9 +37,22 @@ export const expenseItems = pgTable('expense_items', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// Table des budgets mensuels
+export const monthlyBudgets = pgTable('monthly_budgets', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').references(() => users.id).notNull(),
+  month: text('month').notNull(), // Format YYYY-MM
+  year: integer('year').notNull(),
+  initialCapital: decimal('initial_capital', { precision: 12, scale: 2 }).notNull(),
+  description: text('description'), // Ex: "Capital donné par papa"
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   expenses: many(expenses),
+  monthlyBudgets: many(monthlyBudgets),
 }));
 
 export const expensesRelations = relations(expenses, ({ one, many }) => ({
@@ -57,6 +70,13 @@ export const expenseItemsRelations = relations(expenseItems, ({ one }) => ({
   }),
 }));
 
+export const monthlyBudgetsRelations = relations(monthlyBudgets, ({ one }) => ({
+  user: one(users, {
+    fields: [monthlyBudgets.userId],
+    references: [users.id],
+  }),
+}));
+
 // Types pour TypeScript
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -64,3 +84,5 @@ export type Expense = typeof expenses.$inferSelect;
 export type NewExpense = typeof expenses.$inferInsert;
 export type ExpenseItem = typeof expenseItems.$inferSelect;
 export type NewExpenseItem = typeof expenseItems.$inferInsert;
+export type MonthlyBudget = typeof monthlyBudgets.$inferSelect;
+export type NewMonthlyBudget = typeof monthlyBudgets.$inferInsert;
