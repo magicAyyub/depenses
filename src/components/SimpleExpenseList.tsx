@@ -22,6 +22,7 @@ import {
   Download, Calendar, Edit, Plus, History } from 'lucide-react';
 import { exportToPDF } from '@/lib/pdf';
 import BudgetManager from './BudgetManager';
+import { formatCurrency } from '@/lib/utils';
 
 interface SimpleExpenseListProps {
   onEditMonth?: (monthId: string) => void;
@@ -115,7 +116,7 @@ export default function SimpleExpenseList({
             </div>
             <div className="text-right">
               <div className="text-2xl font-bold text-green-600">
-                {getTotalGeneral().toLocaleString()} F CFA
+                {formatCurrency(getTotalGeneral())} F CFA
               </div>
               <div className="text-sm text-gray-500 font-normal">
                 Total général
@@ -192,7 +193,7 @@ export default function SimpleExpenseList({
                 <div className="flex items-center space-x-3">
                   <div className="text-right">
                     <div className="text-xl font-bold text-blue-600">
-                      {expenseMonth.total.toLocaleString()} F CFA
+                      {formatCurrency(expenseMonth.total)} F CFA
                     </div>
                     <div className="text-xs text-gray-500">
                       Total du mois
@@ -230,7 +231,7 @@ export default function SimpleExpenseList({
                   {/* Prix en dessous sur mobile avec mise en valeur */}
                   <div className="bg-blue-50 px-3 py-2 rounded-lg inline-block">
                     <div className="text-xl font-bold text-blue-600">
-                      {expenseMonth.total.toLocaleString()} F CFA
+                      {formatCurrency(expenseMonth.total)} F CFA
                     </div>
                     <div className="text-xs text-blue-500">
                       Total du mois
@@ -283,7 +284,7 @@ export default function SimpleExpenseList({
                               {expense.description}
                             </TableCell>
                             <TableCell className="text-right font-semibold">
-                              {expense.amount.toLocaleString()} F CFA
+                              {formatCurrency(expense.amount)} F CFA
                             </TableCell>
                             <TableCell>
                               <Badge variant="outline">{expense.createdBy}</Badge>
@@ -295,7 +296,7 @@ export default function SimpleExpenseList({
                             TOTAL
                           </TableCell>
                           <TableCell className="text-right font-bold text-lg">
-                            {expenseMonth.total.toLocaleString()} F CFA
+                            {formatCurrency(expenseMonth.total)} F CFA
                           </TableCell>
                         <TableCell></TableCell>
                       </TableRow>
@@ -320,7 +321,7 @@ export default function SimpleExpenseList({
                               </div>
                               <div className="text-right">
                                 <p className="font-semibold text-sm">
-                                  {expense.amount.toLocaleString()} F CFA
+                                  {formatCurrency(expense.amount)} F CFA
                                 </p>
                                 <Badge variant="outline" className="text-xs mt-1">
                                   {expense.createdBy}
@@ -335,7 +336,7 @@ export default function SimpleExpenseList({
                           <div className="flex justify-between items-center">
                             <span className="font-semibold text-sm">TOTAL</span>
                             <span className="font-bold text-lg text-blue-700">
-                              {expenseMonth.total.toLocaleString()} F CFA
+                              {formatCurrency(expenseMonth.total)} F CFA
                             </span>
                           </div>
                         </div>

@@ -20,6 +20,7 @@ import {
 import { PiggyBank, Edit2, Plus, TrendingDown, TrendingUp, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { formatCurrency, parseUserNumber } from '@/lib/utils';
 
 interface MonthlyBudget {
   id: string;
@@ -86,7 +87,7 @@ export default function BudgetManager({ month, year, totalExpenses, onBudgetUpda
       return;
     }
 
-    const capital = parseFloat(formData.initialCapital);
+    const capital = parseUserNumber(formData.initialCapital);
     if (isNaN(capital) || capital <= 0) {
       toast.error('Le capital doit être un nombre positif');
       return;
@@ -155,14 +156,6 @@ export default function BudgetManager({ month, year, totalExpenses, onBudgetUpda
     } finally {
       setDeleting(false);
     }
-  };
-
-  const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', { 
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-      useGrouping: true 
-    }).format(amount).replace(/\s/g, ' ');
   };
 
   const getRemaining = () => {
@@ -240,7 +233,7 @@ export default function BudgetManager({ month, year, totalExpenses, onBudgetUpda
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="text-center p-4 bg-white rounded-lg border">
                 <div className="text-2xl font-bold text-blue-600">
-                  {formatAmount(parseFloat(budget.initialCapital))} F CFA
+                  {formatCurrency(parseFloat(budget.initialCapital))} F CFA
                 </div>
                 <div className="text-sm text-gray-600">Capital initial</div>
                 {budget.description && (
@@ -250,7 +243,7 @@ export default function BudgetManager({ month, year, totalExpenses, onBudgetUpda
               
               <div className="text-center p-4 bg-white rounded-lg border">
                 <div className="text-2xl font-bold text-red-600">
-                  {formatAmount(totalExpenses)} F CFA
+                  {formatCurrency(totalExpenses)} F CFA
                 </div>
                 <div className="text-sm text-gray-600">Dépenses</div>
                 <div className="text-xs text-gray-500 mt-1">
@@ -260,7 +253,7 @@ export default function BudgetManager({ month, year, totalExpenses, onBudgetUpda
               
               <div className="text-center p-4 bg-white rounded-lg border">
                 <div className={`text-2xl font-bold ${isOverBudget() ? 'text-red-600' : 'text-green-600'}`}>
-                  {isOverBudget() && '-'}{formatAmount(Math.abs(getRemaining()))} F CFA
+                  {isOverBudget() && '-'}{formatCurrency(Math.abs(getRemaining()))} F CFA
                 </div>
                 <div className="text-sm text-gray-600 flex items-center justify-center space-x-1">
                   {isOverBudget() ? (
@@ -291,7 +284,7 @@ export default function BudgetManager({ month, year, totalExpenses, onBudgetUpda
             {isOverBudget() && (
               <Alert variant="destructive">
                 <AlertDescription>
-                  Attention ! Vous avez dépassé votre budget de {formatAmount(Math.abs(getRemaining()))} F CFA
+                  Attention ! Vous avez dépassé votre budget de {formatCurrency(Math.abs(getRemaining()))} F CFA
                 </AlertDescription>
               </Alert>
             )}
@@ -356,7 +349,7 @@ export default function BudgetManager({ month, year, totalExpenses, onBudgetUpda
             <AlertDialogDescription>
               Êtes-vous sûr de vouloir supprimer le budget de ce mois ? Cette action est irréversible.
               <br />
-              <strong>Capital: {budget && formatAmount(parseFloat(budget.initialCapital))} F CFA</strong>
+              <strong>Capital: {budget && formatCurrency(parseFloat(budget.initialCapital))} F CFA</strong>
             </AlertDialogDescription>
           </AlertDialogHeader>
           

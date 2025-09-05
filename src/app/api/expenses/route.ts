@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { db, expenses, users } from '@/lib/db';
 import { eq } from 'drizzle-orm';
+import { parseUserNumber } from '@/lib/utils';
 
 // Helper pour vérifier l'authentification
 async function requireAuth(request: NextRequest) {
@@ -111,8 +112,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Valider le montant
-    const numericAmount = parseFloat(amount);
+    // Valider le montant avec normalisation (accepter virgule ou point)
+    const numericAmount = typeof amount === 'string' ? parseUserNumber(amount) : parseFloat(amount);
     if (isNaN(numericAmount) || numericAmount <= 0) {
       return NextResponse.json(
         { success: false, message: 'Le montant doit être un nombre positif' },

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { Trash2, Save, Check, Plus } from 'lucide-react';
+import { parseUserNumber, formatCurrency } from '@/lib/utils';
 
 interface ExpenseItem {
   amount: string;
@@ -62,11 +63,11 @@ export default function SimpleExpenseInput({ onSave }: ExpenseInputProps) {
   };
 
   const getValidExpenses = () => {
-    return expenses.filter(exp => exp.amount && exp.description && parseFloat(exp.amount) > 0);
+    return expenses.filter(exp => exp.amount && exp.description && parseUserNumber(exp.amount) > 0);
   };
 
   const getTotal = () => {
-    return getValidExpenses().reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
+    return getValidExpenses().reduce((sum, exp) => sum + parseUserNumber(exp.amount), 0);
   };
 
   const handlePreview = () => {
@@ -97,7 +98,7 @@ export default function SimpleExpenseInput({ onSave }: ExpenseInputProps) {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              amount: parseFloat(exp.amount),
+              amount: parseUserNumber(exp.amount), // Utiliser parseUserNumber pour normaliser
               description: exp.description,
               date: new Date().toISOString()
             }),
@@ -306,7 +307,7 @@ export default function SimpleExpenseInput({ onSave }: ExpenseInputProps) {
                 <p className="text-sm text-gray-500">{getValidExpenses().length} article{getValidExpenses().length > 1 ? 's' : ''} à enregistrer</p>
               </div>
               <div className="text-left sm:text-right">
-                <div className="text-3xl font-bold text-green-600">{getTotal().toLocaleString()}</div>
+                <div className="text-3xl font-bold text-green-600">{formatCurrency(getTotal())}</div>
                 <div className="text-sm text-gray-500">F CFA</div>
               </div>
             </div>
@@ -323,7 +324,7 @@ export default function SimpleExpenseInput({ onSave }: ExpenseInputProps) {
                         <div className="font-medium text-gray-900">{expense.description}</div>
                       </div>
                       <div className="text-lg font-semibold text-gray-900 ml-4">
-                        {parseFloat(expense.amount).toLocaleString()} F CFA
+                        {formatCurrency(parseUserNumber(expense.amount))} F CFA
                       </div>
                     </div>
                   </div>
