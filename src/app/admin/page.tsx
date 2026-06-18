@@ -1,69 +1,28 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useNeonAuth } from '@/contexts/NeonAuthContext';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeftIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
+import { ShieldCheckIcon, ArrowRightOnRectangleIcon, UserIcon } from '@heroicons/react/24/outline';
 import { Toaster } from '@/components/ui/sonner';
-import Link from 'next/link';
 import UserManagement from '@/components/UserManagement';
+import Loading from '@/components/Loading';
+import EditProfileModal from '@/components/EditProfileModal';
 
 export default function AdminPage() {
-  const { user } = useNeonAuth();
+  const { user, isLoading, logout } = useNeonAuth();
+  const router = useRouter();
+  const [showProfileDialog, setShowProfileDialog] = useState(false);
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <div className="min-h-screen flex items-center justify-center p-4">
-          <Card className="w-full max-w-md">
-            <CardContent className="p-8">
-              <div className="text-center">
-                <div className="p-3 bg-red-100 rounded-full w-fit mx-auto mb-4">
-                  <ShieldCheckIcon className="h-8 w-8 text-red-600" />
-                </div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">Accès restreint</h2>
-                <Alert>
-                  <AlertDescription>
-                    Vous devez être connecté pour accéder à cette page.
-                  </AlertDescription>
-                </Alert>
-                <Link href="/login" className="block mt-6">
-                  <Button className="w-full">Se connecter</Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!isLoading && (!user || !user.isAdmin)) {
+      router.push('/');
+    }
+  }, [user, isLoading, router]);
 
-  if (!user.isAdmin) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <div className="min-h-screen flex items-center justify-center p-4">
-          <Card className="w-full max-w-md">
-            <CardContent className="p-8">
-              <div className="text-center">
-                <div className="p-3 bg-orange-100 rounded-full w-fit mx-auto mb-4">
-                  <ShieldCheckIcon className="h-8 w-8 text-orange-600" />
-                </div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">Droits insuffisants</h2>
-                <Alert>
-                  <AlertDescription>
-                    Vous n&apos;avez pas les droits d&apos;administrateur pour accéder à cette page.
-                  </AlertDescription>
-                </Alert>
-                <Link href="/" className="block mt-6">
-                  <Button className="w-full">Retour à l&apos;accueil</Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
+  if (isLoading || !user || !user.isAdmin) {
+    return <Loading />;
   }
 
   return (
@@ -82,13 +41,22 @@ export default function AdminPage() {
               </div>
             </div>
             
-            <Link href="/">
-              <Button variant="outline" className="flex items-center gap-2">
-                <ArrowLeftIcon className="h-4 w-4" />
-                <span className="hidden sm:inline">Retour à l&apos;accueil</span>
-                <span className="sm:hidden">Retour</span>
+            <div className="flex items-center space-x-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowProfileDialog(true)}
+                className="flex items-center gap-2 border-gray-200 hover:bg-gray-50 text-gray-700"
+              >
+                <UserIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Profil</span>
               </Button>
-            </Link>
+
+              <Button variant="outline" onClick={logout} className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200">
+                <ArrowRightOnRectangleIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Se déconnecter</span>
+                <span className="sm:hidden">Déconnexion</span>
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -113,6 +81,7 @@ export default function AdminPage() {
         }} />
       </main>
       
+      <EditProfileModal isOpen={showProfileDialog} onClose={() => setShowProfileDialog(false)} />
       <Toaster />
     </div>
   );

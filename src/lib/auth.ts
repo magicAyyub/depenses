@@ -93,19 +93,23 @@ export async function signIn(emailOrUsername: string, password: string): Promise
 
 // Inscription utilisateur
 export async function registerUser(
-  email: string,
+  email: string | null | undefined,
   username: string,
   fullName: string,
   password: string,
   isAdmin: boolean = false
 ): Promise<RegisterResult> {
   try {
-    const [existingUser] = await db.select().from(users)
-      .where(eq(users.email, email))
-      .limit(1);
-    
-    if (existingUser) {
-      return { success: false, message: 'Un utilisateur avec cet email existe déjà' };
+    const cleanEmail = email && email.trim() !== '' ? email.trim() : null;
+
+    if (cleanEmail) {
+      const [existingUser] = await db.select().from(users)
+        .where(eq(users.email, cleanEmail))
+        .limit(1);
+      
+      if (existingUser) {
+        return { success: false, message: 'Un utilisateur avec cet email existe déjà' };
+      }
     }
 
     const [existingUsername] = await db.select().from(users)
@@ -119,7 +123,7 @@ export async function registerUser(
     const passwordHash = await hashPassword(password);
 
     const [newUser] = await db.insert(users).values({
-      email,
+      email: cleanEmail,
       username,
       fullName,
       passwordHash,
@@ -168,7 +172,7 @@ export function signOut(): void {
   // La vraie déconnexion se fait via l'API /auth/logout qui supprime le cookie
   if (typeof window !== 'undefined') {
     // Rediriger vers la page de connexion ou recharger la page
-    window.location.href = '/login';
+    window.location.href = '/';
   }
 }
 

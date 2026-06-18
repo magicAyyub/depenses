@@ -44,9 +44,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Récupérer le budget partagé pour ce mois (sans filtrer par utilisateur)
+    // Récupérer le budget pour ce mois et pour l'utilisateur connecté
     const budget = await db.select().from(monthlyBudgets)
       .where(and(
+        eq(monthlyBudgets.userId, user.id),
         eq(monthlyBudgets.month, month),
         eq(monthlyBudgets.year, parseInt(year))
       ))
@@ -96,9 +97,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Vérifier s'il existe déjà un budget pour ce mois (partagé, sans user)
+    // Vérifier s'il existe déjà un budget pour ce mois pour l'utilisateur connecté
     const existingBudget = await db.select().from(monthlyBudgets)
       .where(and(
+        eq(monthlyBudgets.userId, user.id),
         eq(monthlyBudgets.month, month),
         eq(monthlyBudgets.year, year)
       ))
@@ -165,9 +167,10 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Vérifier si le budget existe (partagé, sans user)
+    // Vérifier si le budget existe pour l'utilisateur connecté
     const existingBudget = await db.select().from(monthlyBudgets)
       .where(and(
+        eq(monthlyBudgets.userId, user.id),
         eq(monthlyBudgets.month, month),
         eq(monthlyBudgets.year, parseInt(year))
       ))

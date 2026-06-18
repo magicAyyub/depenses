@@ -6,7 +6,6 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
@@ -271,7 +270,6 @@ export default function SimpleExpenseList({
                           <TableHead>Date</TableHead>
                           <TableHead>Description</TableHead>
                           <TableHead className="text-right">Montant (F CFA)</TableHead>
-                          <TableHead>Saisi par</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -286,9 +284,6 @@ export default function SimpleExpenseList({
                             <TableCell className="text-right font-semibold">
                               {formatCurrency(expense.amount)} F CFA
                             </TableCell>
-                            <TableCell>
-                              <Badge variant="outline">{expense.createdBy}</Badge>
-                            </TableCell>
                           </TableRow>
                         ))}
                         <TableRow className="bg-gray-50">
@@ -298,7 +293,6 @@ export default function SimpleExpenseList({
                           <TableCell className="text-right font-bold text-lg">
                             {formatCurrency(expenseMonth.total)} F CFA
                           </TableCell>
-                        <TableCell></TableCell>
                       </TableRow>
                     </TableBody>
                   </Table>
@@ -323,9 +317,6 @@ export default function SimpleExpenseList({
                                 <p className="font-semibold text-sm">
                                   {formatCurrency(expense.amount)} F CFA
                                 </p>
-                                <Badge variant="outline" className="text-xs mt-1">
-                                  {expense.createdBy}
-                                </Badge>
                               </div>
                             </div>
                           </div>

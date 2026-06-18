@@ -2,7 +2,6 @@ import jsPDF from 'jspdf';
 import { ExpenseMonth, OldExpense } from '@/types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { formatCurrency } from './utils';
 
 export function exportToPDF(expenseMonth: ExpenseMonth): void {
   const doc = new jsPDF();

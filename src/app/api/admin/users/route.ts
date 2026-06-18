@@ -37,9 +37,9 @@ export async function POST(request: NextRequest) {
 
     const { email, username, fullName, password, isAdmin = false } = await request.json();
 
-    if (!email || !username || !fullName || !password) {
+    if (!username || !fullName || !password) {
       return NextResponse.json(
-        { success: false, message: 'Tous les champs sont requis (email, username, fullName, password)' },
+        { success: false, message: 'Les champs nom d\'utilisateur, nom complet et mot de passe sont requis' },
         { status: 400 }
       );
     }

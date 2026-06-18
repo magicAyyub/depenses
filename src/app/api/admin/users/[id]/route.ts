@@ -79,7 +79,7 @@ export async function DELETE(
   }
 }
 
-// Modifier les droits admin d'un utilisateur
+// Modifier les droits admin d'un utilisateur ou réinitialiser son code PIN
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -97,22 +97,7 @@ export async function PATCH(
 
     const userId = resolvedParams.id;
     const currentUser = authCheck.user;
-    const { isAdmin } = await request.json();
-
-    if (typeof isAdmin !== 'boolean') {
-      return NextResponse.json(
-        { success: false, message: 'Le champ isAdmin doit être un booléen' },
-        { status: 400 }
-      );
-    }
-
-    // Empêcher l'admin de retirer ses propres droits
-    if (currentUser.id === userId && !isAdmin) {
-      return NextResponse.json(
-        { success: false, message: 'Vous ne pouvez pas retirer vos propres droits admin' },
-        { status: 400 }
-      );
-    }
+    const { isAdmin, resetPin } = await request.json();
 
     // Vérifier que l'utilisateur existe
     const [targetUser] = await db.select().from(users)
@@ -126,12 +111,52 @@ export async function PATCH(
       );
     }
 
-    // Mettre à jour les droits admin
+    // Préparer les champs à mettre à jour
+    const updateData: Record<string, unknown> = {
+      updatedAt: new Date()
+    };
+
+    let message = '';
+
+    if (isAdmin !== undefined) {
+      if (typeof isAdmin !== 'boolean') {
+        return NextResponse.json(
+          { success: false, message: 'Le champ isAdmin doit être un booléen' },
+          { status: 400 }
+        );
+      }
+
+      // Empêcher l'admin de retirer ses propres droits
+      if (currentUser.id === userId && !isAdmin) {
+        return NextResponse.json(
+          { success: false, message: 'Vous ne pouvez pas retirer vos propres droits admin' },
+          { status: 400 }
+        );
+      }
+
+      updateData.isAdmin = isAdmin;
+      const action = isAdmin ? 'accordés' : 'retirés';
+      message = `Droits admin ${action} pour ${targetUser.username}`;
+    }
+
+    if (resetPin === true) {
+      updateData.pinHash = null;
+      message = message 
+        ? `${message}. Code PIN réinitialisé.`
+        : `Code PIN réinitialisé avec succès pour ${targetUser.username}`;
+    }
+
+    // Vérifier si des champs ont été modifiés
+    if (Object.keys(updateData).length <= 1) {
+      return NextResponse.json(
+        { success: false, message: 'Aucune modification spécifiée' },
+        { status: 400 }
+      );
+    }
+
+    // Mettre à jour l'utilisateur
     const [updatedUser] = await db.update(users)
-      .set({ 
-        isAdmin,
-        updatedAt: new Date()
-      })
+      .set(updateData)
       .where(eq(users.id, userId))
       .returning({
         id: users.id,
@@ -143,15 +168,13 @@ export async function PATCH(
         updatedAt: users.updatedAt,
       });
 
-    const action = isAdmin ? 'accordés' : 'retirés';
-    
     return NextResponse.json({
       success: true,
-      message: `Droits admin ${action} pour ${targetUser.username}`,
+      message,
       user: updatedUser
     });
   } catch (error) {
-    console.error('Update user admin rights error:', error);
+    console.error('Update user error:', error);
     return NextResponse.json(
       { success: false, message: 'Erreur serveur' },
       { status: 500 }

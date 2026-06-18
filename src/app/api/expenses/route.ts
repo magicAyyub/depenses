@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 
     const { user } = authCheck;
 
-    // Récupérer TOUTES les dépenses avec les informations de l'utilisateur qui les a créées
+    // Récupérer uniquement les dépenses de l'utilisateur connecté
     const allExpenses = await db.select({
       id: expenses.id,
       title: expenses.title,
@@ -50,6 +50,7 @@ export async function GET(request: NextRequest) {
     })
     .from(expenses)
     .leftJoin(users, eq(expenses.userId, users.id))
+    .where(eq(expenses.userId, user.id))
     .orderBy(expenses.date);
 
     // Pour l'instant, retourner un format compatible avec l'ancien système

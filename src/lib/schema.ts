@@ -4,11 +4,12 @@ import { relations } from 'drizzle-orm';
 // Table des utilisateurs
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
-  email: text('email').notNull().unique(),
+  email: text('email').unique(),
   username: text('username').notNull().unique(),
   fullName: text('full_name').notNull(),
   passwordHash: text('password_hash').notNull(),
   isAdmin: boolean('is_admin').default(false).notNull(),
+  pinHash: text('pin_hash'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -16,7 +17,7 @@ export const users = pgTable('users', {
 // Table des dépenses
 export const expenses = pgTable('expenses', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').references(() => users.id).notNull(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   title: text('title').notNull(),
   description: text('description'),
   amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
@@ -40,7 +41,7 @@ export const expenseItems = pgTable('expense_items', {
 // Table des budgets mensuels
 export const monthlyBudgets = pgTable('monthly_budgets', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').references(() => users.id).notNull(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   month: text('month').notNull(), // Format YYYY-MM
   year: integer('year').notNull(),
   initialCapital: decimal('initial_capital', { precision: 12, scale: 2 }).notNull(),

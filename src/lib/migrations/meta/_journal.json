@@ -15,6 +15,20 @@
       "when": 1756739925508,
       "tag": "0001_purple_layla_miller",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781822073374,
+      "tag": "0002_lethal_sphinx",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1781823311340,
+      "tag": "0003_purple_kabuki",
+      "breakpoints": true
     }
   ]
 }

@@ -36,7 +36,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 interface User {
   id: string;
-  email: string;
+  email: string | null;
   username: string;
   fullName: string;
   isAdmin: boolean;
@@ -134,11 +134,37 @@ export default function UserManagement({ currentUser }: UserManagementProps) {
     }
   };
 
+  const handleResetPin = async (userId: string) => {
+    try {
+      setActionLoading(userId);
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ resetPin: true }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        await fetchUsers();
+        toast.success(data.message);
+      } else {
+        toast.error(data.message || 'Erreur lors de la réinitialisation du code PIN');
+      }
+    } catch {
+      toast.error('Erreur de connexion');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!createFormData.email || !createFormData.username || !createFormData.fullName || !createFormData.password) {
-      toast.error('Tous les champs sont requis');
+    if (!createFormData.username || !createFormData.fullName || !createFormData.password) {
+      toast.error('Le nom d\'utilisateur, le nom complet et le mot de passe sont requis');
       return;
     }
 
@@ -268,14 +294,13 @@ export default function UserManagement({ currentUser }: UserManagementProps) {
             <form onSubmit={handleCreateUser} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">Email (optionnel)</Label>
                   <Input
                     id="email"
                     type="email"
                     value={createFormData.email}
                     onChange={(e) => setCreateFormData(prev => ({ ...prev, email: e.target.value }))}
                     placeholder="email@example.com"
-                    required
                   />
                 </div>
                 <div>
@@ -444,6 +469,38 @@ export default function UserManagement({ currentUser }: UserManagementProps) {
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
+                    
+                    {!user.isAdmin && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={actionLoading === user.id}
+                            className="flex-1 h-8 text-xs border-orange-200 text-orange-700 hover:bg-orange-50 hover:text-orange-800"
+                          >
+                            Reset PIN
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Réinitialiser le code PIN</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Réinitialiser le code PIN de {user.fullName} ? L&apos;utilisateur devra en configurer un nouveau lors de sa prochaine connexion.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Annuler</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => handleResetPin(user.id)}
+                              className="bg-orange-650 hover:bg-orange-700 text-white"
+                            >
+                              Réinitialiser
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
                     
                     <AlertDialog>
                       <AlertDialogTrigger asChild>

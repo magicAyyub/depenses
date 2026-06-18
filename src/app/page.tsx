@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNeonAuth } from '@/contexts/NeonAuthContext';
 import NeonLoginForm from '@/components/NeonLoginForm';
 import Loading from '@/components/Loading';
@@ -9,15 +9,25 @@ import SimpleExpenseList from '@/components/SimpleExpenseList';
 import ExpenseHistory from '@/components/ExpenseHistory';
 import ExpenseMonthEditor from '@/components/ExpenseMonthEditor';
 import { Toaster } from '@/components/ui/sonner';
-import { LogOut, Wallet, ArrowLeft, Settings } from 'lucide-react';
+import { LogOut, Wallet, ArrowLeft, Settings, User } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import EditProfileModal from '@/components/EditProfileModal';
 
 type ViewMode = 'input' | 'list' | 'history' | 'edit';
 
 export default function Home() {
   const { user, isLoading, logout } = useNeonAuth();
+  const router = useRouter();
   const [currentView, setCurrentView] = useState<ViewMode>('list'); // Commencer par la liste
   const [editingMonthId, setEditingMonthId] = useState<string | null>(null);
+  const [showProfileDialog, setShowProfileDialog] = useState(false);
+
+  useEffect(() => {
+    if (user && user.isAdmin) {
+      router.push('/admin');
+    }
+  }, [user, router]);
 
   const handleEditMonth = (monthId: string) => {
     setEditingMonthId(monthId);
@@ -38,7 +48,7 @@ export default function Home() {
     setCurrentView(view);
   };
 
-  if (isLoading) {
+  if (isLoading || (user && user.isAdmin)) {
     return <Loading />;
   }
 
@@ -68,6 +78,13 @@ export default function Home() {
               <span className="text-sm text-gray-600 hidden sm:block">
                 {user.fullName}
               </span>
+              <button
+                onClick={() => setShowProfileDialog(true)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                title="Modifier mon profil"
+              >
+                <User className="h-5 w-5 text-gray-600" />
+              </button>
               {user.isAdmin && (
                 <Link href="/admin">
                   <button className="p-2 hover:bg-gray-100 rounded-full transition-colors" title="Administration">
@@ -159,6 +176,7 @@ export default function Home() {
         )}
       </main>
       
+      <EditProfileModal isOpen={showProfileDialog} onClose={() => setShowProfileDialog(false)} />
       <Toaster />
     </div>
   );
